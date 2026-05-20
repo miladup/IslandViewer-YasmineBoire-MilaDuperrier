@@ -53,14 +53,55 @@ void drawImGui(AppContext &context)
         generateObjectsPositions(context);
     }
 
-    if (ImGui::CollapsingHeader("objects", ImGuiTreeNodeFlags_DefaultOpen))
+    auto &imgParams = context.imageGenerationParameters;
+
+    if (ImGui::CollapsingHeader("Island generation", ImGuiTreeNodeFlags_DefaultOpen))
     {
-        ImGui::SliderFloat("Cube Scale", &context.cubeScale, 0.01f, 1.0f);
-        if (ImGui::SliderFloat("Noise", &context.imageGenerationParameters.noiseScale, 0.01f, 10.0f))
+        ImGui::Text("Fractal noise (FBM)");
+
+        if (ImGui::SliderInt("Seed", &imgParams.noiseSeed, 0, 1000))
         {
             generateHeightmap(context);
             regenerateMeshFromImage(context);
         }
+        
+        if (ImGui::SliderFloat("Scale", &imgParams.noiseScale, 0.01f, 10.0f))
+        {
+            generateHeightmap(context);
+            regenerateMeshFromImage(context);
+        }
+
+        if (ImGui::SliderInt("Octaves", &imgParams.octaves, 1, 8))
+        {
+            generateHeightmap(context);
+            regenerateMeshFromImage(context);
+        }
+
+        if (ImGui::SliderFloat("Lacunarity", &imgParams.lacunarity, 1.0f, 4.0f, "%.2f"))
+        {
+            generateHeightmap(context);
+            regenerateMeshFromImage(context);
+        }
+
+        if (ImGui::SliderFloat("Gain", &imgParams.gain, 0.0f, 1.0f, "%.2f"))
+        {
+            generateHeightmap(context);
+            regenerateMeshFromImage(context);
+        }
+
+        ImGui::Separator();
+        ImGui::Text("Radial Mask");
+
+        if (ImGui::SliderFloat("Mask power", &imgParams.maskPower, 0.5f, 6.0f, "%.1f"))
+        {
+            generateHeightmap(context);
+            regenerateMeshFromImage(context);
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Objects", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::SliderFloat("Cube Scale", &context.cubeScale, 0.01f, 1.0f);
     }
 }
 

@@ -62,9 +62,12 @@ float sampleHeightmap(AppContext const &context, float u, float v)
     return static_cast<float>(c.r) / 255.0f;
 }
 
+extern int g_numOctaves;
+extern float g_lacunarity;
+extern float g_gain;
+
 void generateHeightmap(AppContext &context)
 {
-
     if (context.texture.id > 0)
     {
         UnloadTexture(context.texture);
@@ -83,37 +86,66 @@ void generateHeightmap(AppContext &context)
         context.heightmapImage = {};
     }
 
+    g_numOctaves = context.imageGenerationParameters.octaves;
+    g_lacunarity = context.imageGenerationParameters.lacunarity;
+    g_gain = context.imageGenerationParameters.gain;
+
     int const resolution = std::max(1, context.imageGenerationParameters.resolution);
 
     context.heightmapImage = GenImageFromNoiseFunction<float>(resolution, resolution, PIXELFORMAT_UNCOMPRESSED_R32,
                                                               [&](glm::vec2 const &p) -> float
                                                               {
-                                                                  // TODO(student): implement stack based noise and island mask
-
-                                                                  return (octaveNoise(p * context.imageGenerationParameters.noiseScale,
+                                                                  float noiseValue = octaveNoise(p * context.imageGenerationParameters.noiseScale,
                                                                                       [&](glm::vec2 const &p) -> float
                                                                                       {
                                                                                           return perlinNoiseSeeded(p, context.imageGenerationParameters.noiseSeed);
-                                                                                      }) *
-                                                                              0.5f +
-                                                                          0.5f);
+                                                                                      }) * 0.5f + 0.5f;
+                    
+                                                                  glm::vec2 center(0.5f, 0.5f);
+                                                                  float distanceToCenter = glm::distance(p, center);
+                                                                  float normalizedDistance = distanceToCenter / 0.5f;
+                                                                  float mask = 1.0f - std::pow(std::clamp(normalizedDistance, 0.0f, 1.0f), context.imageGenerationParameters.maskPower);
+                                                                  float finalHeight = noiseValue * mask;
+
+                                                                  if (finalHeight < context.imageGenerationParameters.waterLevel)
+                                                                  {
+                                                                      return context.imageGenerationParameters.waterLevel;
+                                                                  }
+
+                                                                  return finalHeight;
                                                               });
 
     // exemple conversion from heightmap to color image
     context.image = TransformImage<float, Color>(context.heightmapImage, [&](float const &v, int const, int const)
                                                  {
-                                                     if (v < 0.3f)
+                                                     glm::vec3 water = {70.0f, 130.0f, 180.0f};
+                                                     glm::vec3 sand  = {238.0f, 214.0f, 175.0f};
+                                                     glm::vec3 grass = {34.0f, 139.0f, 34.0f};
+                                                     glm::vec3 lightRock = {180.0f, 180.0f, 180.0f};
+
+                                                     if (v < 0.28f)
                                                      {
-                                                         return color_from({70, 130, 180}); // water
+                                                         return color_from({70, 130, 180});
                                                      }
-                                                     else if (v < 0.5f)
+                                                     else if (v < 0.30f)
                                                      {
-                                                         return color_from({238, 214, 175}); // sand
+                                                         float t = (v - 0.28f) / (0.30f - 0.28f); // water to sand
+                                                         glm::vec3 mixed = glm::mix(water, sand, t);
+                                                         return color_from({ (unsigned char)mixed.x, (unsigned char)mixed.y, (unsigned char)mixed.z });
                                                      }
-                                                     else
+                                                     else if (v < 0.55f)
                                                      {
-                                                         return color_from({34, 139, 34}); // grass
-                                                     } }, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+                                                         float t = (v - 0.30f) / (0.55f - 0.30f); // sand to grass
+                                                         glm::vec3 mixed = glm::mix(sand, grass, t);
+                                                         return color_from({ (unsigned char)mixed.x, (unsigned char)mixed.y, (unsigned char)mixed.z });
+                                                     }
+                                                     else 
+                                                     {
+                                                        float t = std::clamp((v - 0.55f) / (0.70f - 0.55f), 0.0f, 1.0f); // grass to rock
+                                                        glm::vec3 mixed = glm::mix(grass, lightRock, t);
+                                                        return color_from({ (unsigned char)mixed.x, (unsigned char)mixed.y, (unsigned char)mixed.z });
+                                                     }
+                                                 }, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
     context.texture = LoadTextureFromImage(context.image);
     if (context.model.meshCount > 0)

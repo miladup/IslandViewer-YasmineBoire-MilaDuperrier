@@ -9,6 +9,16 @@ struct ImageGenerationParameters
     int noiseSeed{0};
     float noiseScale{4.0f};
     int resolution{256};
+
+    // fbm
+    int octaves{5};
+    float lacunarity{2.0f};
+    float gain{0.5f};
+
+    // masque radial
+    float maskPower{2.0f};
+    float waterLevel{0.28f};
+    float sandLevel{0.30f};
 };
 
 struct PointsGenerationParameters

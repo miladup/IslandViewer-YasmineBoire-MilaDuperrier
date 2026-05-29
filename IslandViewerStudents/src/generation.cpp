@@ -4,41 +4,128 @@
 #include "raylib.h"
 
 #include "utils/raylibUtils.hpp"
-#include <algorithm> // for std::clamp
+#include <algorithm>
+#include <cmath>
 
-std::vector<glm::vec2> generate2DPositions([[maybe_unused]] PointsGenerationParameters const &params)
+std::vector<glm::vec2> generate2DPositions(PointsGenerationParameters const &params, AppContext const &context)
 {
-    std::vector<glm::vec2> positions{};
+    float const r{params.minDistance};
+    int const k{params.maxAttempts};
 
-    positions.reserve(1000);
-    // Naive random generation
-    for (int i{0}; i < 1000; ++i)
+    float const cellSize{r / std::sqrt(2.0f)};
+    int const gridW{static_cast<int>(std::ceil(1.0f / cellSize))};
+    int const gridH{static_cast<int>(std::ceil(1.0f / cellSize))};
+    std::vector<int> grid(gridW * gridH, -1);
+
+    auto gridCoord = [&](glm::vec2 const &p) -> glm::ivec2
     {
-        positions.emplace_back(
-            static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX),
-            static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX));
+        return {static_cast<int>(p.x / cellSize), static_cast<int>(p.y / cellSize)};
+    };
+    auto gridIndex = [&](int gx, int gy) -> int
+    {
+        return gy * gridW + gx;
+    };
+
+    auto isFarEnough = [&](glm::vec2 const &candidate, std::vector<glm::vec2> const &positions) -> bool
+    {
+        glm::ivec2 const gc{gridCoord(candidate)};
+        for (int dy{-2}; dy <= 2; ++dy)
+            for (int dx{-2}; dx <= 2; ++dx)
+            {
+                int const nx{gc.x + dx}, ny{gc.y + dy};
+                if (nx < 0 || nx >= gridW || ny < 0 || ny >= gridH)
+                    continue;
+                int const idx{grid[gridIndex(nx, ny)]};
+                if (idx == -1)
+                    continue;
+                if (glm::distance(candidate, positions[idx]) < r)
+                    return false;
+            }
+        return true;
+    };
+
+    auto isOnIsland = [&](glm::vec2 const &p) -> bool
+    {
+        return sampleHeightmap(context, p.x, p.y) > context.imageGenerationParameters.waterLevel;
+    };
+
+    std::vector<glm::vec2> positions{};
+    std::vector<int> activeList{};
+
+    {
+        glm::vec2 startPoint{};
+        bool found{false};
+        for (int attempt{0}; attempt < 10000 && !found; ++attempt)
+        {
+            startPoint = {
+                static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX),
+                static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX)};
+            if (isOnIsland(startPoint))
+                found = true;
+        }
+        if (!found)
+            return positions;
+
+        positions.push_back(startPoint);
+        activeList.push_back(0);
+        glm::ivec2 const gc{gridCoord(startPoint)};
+        grid[gridIndex(gc.x, gc.y)] = 0;
     }
 
-    // TODO(student): implement Poisson disk sampling to replace the above naive random generation
-    // points output should be in [0..1] range, where (0,0) is one corner of the terrain and (1,1) is the opposite corner, so they can be easily scaled to terrain size and sampled from heightmap.
+    while (!activeList.empty())
+    {
+        int const listIdx{GetRandomValue(0, static_cast<int>(activeList.size()) - 1)};
+        glm::vec2 const base{positions[activeList[listIdx]]};
+        bool foundCandidate{false};
+
+        for (int attempt{0}; attempt < k; ++attempt)
+        {
+            float const angle{
+                static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX) * 2.0f * static_cast<float>(M_PI)};
+            float const radius{
+                r + static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX) * r};
+
+            glm::vec2 const candidate{
+                base.x + radius * std::cos(angle),
+                base.y + radius * std::sin(angle)};
+
+            if (candidate.x < 0.0f || candidate.x > 1.0f ||
+                candidate.y < 0.0f || candidate.y > 1.0f)
+                continue;
+            if (!isOnIsland(candidate))
+                continue;
+            if (!isFarEnough(candidate, positions))
+                continue;
+
+            int const newIdx{static_cast<int>(positions.size())};
+            positions.emplace_back(candidate);
+            activeList.emplace_back(newIdx);
+            glm::ivec2 const gc{gridCoord(candidate)};
+            grid[gridIndex(gc.x, gc.y)] = newIdx;
+            foundCandidate = true;
+            break;
+        }
+
+        if (!foundCandidate)
+            activeList.erase(activeList.begin() + listIdx);
+    }
+
     return positions;
 }
 
 void generateObjectsPositions(AppContext &context)
 {
-    std::vector<glm::vec2> const positions{generate2DPositions(context.pointsGenerationParameters)};
+    std::vector<glm::vec2> const positions{generate2DPositions(context.pointsGenerationParameters, context)};
 
     context.objectPositions.clear();
     context.objectPositions.reserve(positions.size());
     for (glm::vec2 const &p : positions)
     {
         context.objectPositions.emplace_back(
-            p.x, // x
-            p.y, // y
-            // sample height from heightmap for each point (asuming positions are normalized in [0..1] range)
+            p.x,
+            p.y,
             sampleHeightmap(context, p.x, p.y));
     }
-    // TODO(student): extension - filter positions by sampled height range.
 }
 
 float sampleHeightmap(AppContext const &context, float u, float v)
@@ -96,11 +183,13 @@ void generateHeightmap(AppContext &context)
                                                               [&](glm::vec2 const &p) -> float
                                                               {
                                                                   float noiseValue = octaveNoise(p * context.imageGenerationParameters.noiseScale,
-                                                                                      [&](glm::vec2 const &p) -> float
-                                                                                      {
-                                                                                          return perlinNoiseSeeded(p, context.imageGenerationParameters.noiseSeed);
-                                                                                      }) * 0.5f + 0.5f;
-                    
+                                                                                                 [&](glm::vec2 const &p) -> float
+                                                                                                 {
+                                                                                                     return perlinNoiseSeeded(p, context.imageGenerationParameters.noiseSeed);
+                                                                                                 }) *
+                                                                                         0.5f +
+                                                                                     0.5f;
+
                                                                   glm::vec2 center(0.5f, 0.5f);
                                                                   float distanceToCenter = glm::distance(p, center);
                                                                   float normalizedDistance = distanceToCenter / 0.5f;
@@ -144,8 +233,7 @@ void generateHeightmap(AppContext &context)
                                                         float t = std::clamp((v - 0.55f) / (0.70f - 0.55f), 0.0f, 1.0f); // grass to rock
                                                         glm::vec3 mixed = glm::mix(grass, lightRock, t);
                                                         return color_from({ (unsigned char)mixed.x, (unsigned char)mixed.y, (unsigned char)mixed.z });
-                                                     }
-                                                 }, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+                                                     } }, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
 
     context.texture = LoadTextureFromImage(context.image);
     if (context.model.meshCount > 0)

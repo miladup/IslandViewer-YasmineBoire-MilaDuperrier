@@ -25,6 +25,9 @@ struct PointsGenerationParameters
 {
     float minDistance{0.05f};
     int maxAttempts{30};
+
+    bool allowInWater{false};
+    bool allowOnMountains{false};
 };
 
 struct AppContext

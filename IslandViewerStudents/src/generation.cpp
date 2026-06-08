@@ -44,9 +44,23 @@ std::vector<glm::vec2> generate2DPositions(PointsGenerationParameters const &par
         return true;
     };
 
-    auto isOnIsland = [&](glm::vec2 const &p) -> bool
+    auto isValidSpawn = [&](glm::vec2 const &p) -> bool
     {
-        return sampleHeightmap(context, p.x, p.y) > context.imageGenerationParameters.waterLevel;
+        float const height = sampleHeightmap(context, p.x, p.y);
+
+        if (height <= 0.0f) {
+            return false;
+        }
+        
+        if (height < 0.28f && !context.pointsGenerationParameters.allowInWater) {
+            return false;
+        }
+        
+        if (height > 0.55f && !context.pointsGenerationParameters.allowOnMountains) {
+            return false;
+        }
+        
+        return true;
     };
 
     std::vector<glm::vec2> positions{};
@@ -60,7 +74,7 @@ std::vector<glm::vec2> generate2DPositions(PointsGenerationParameters const &par
             startPoint = {
                 static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX),
                 static_cast<float>(GetRandomValue(0, INT_MAX)) / static_cast<float>(INT_MAX)};
-            if (isOnIsland(startPoint))
+            if (isValidSpawn(startPoint))
                 found = true;
         }
         if (!found)
@@ -92,7 +106,7 @@ std::vector<glm::vec2> generate2DPositions(PointsGenerationParameters const &par
             if (candidate.x < 0.0f || candidate.x > 1.0f ||
                 candidate.y < 0.0f || candidate.y > 1.0f)
                 continue;
-            if (!isOnIsland(candidate))
+            if (!isValidSpawn(candidate))
                 continue;
             if (!isFarEnough(candidate, positions))
                 continue;
@@ -196,17 +210,19 @@ void generateHeightmap(AppContext &context)
                                                                   float mask = 1.0f - std::pow(std::clamp(normalizedDistance, 0.0f, 1.0f), context.imageGenerationParameters.maskPower);
                                                                   float finalHeight = noiseValue * mask;
 
-                                                                  if (finalHeight < context.imageGenerationParameters.waterLevel)
-                                                                  {
-                                                                      return context.imageGenerationParameters.waterLevel;
-                                                                  }
+                                                                //   if (finalHeight < context.imageGenerationParameters.waterLevel)
+                                                                //   {
+                                                                //       return context.imageGenerationParameters.waterLevel;
+                                                                //   }
 
-                                                                  return finalHeight;
+                                                               return finalHeight;
                                                               });
 
     // exemple conversion from heightmap to color image
     context.image = TransformImage<float, Color>(context.heightmapImage, [&](float const &v, int const, int const)
                                                  {
+                                                     glm::vec3 deepOcean = {15.0f, 30.0f, 90.0f};
+                                                     glm::vec3 coastWater = {0.0f, 160.0f, 230.0f};
                                                      glm::vec3 water = {70.0f, 130.0f, 180.0f};
                                                      glm::vec3 sand  = {238.0f, 214.0f, 175.0f};
                                                      glm::vec3 grass = {34.0f, 139.0f, 34.0f};
@@ -214,7 +230,9 @@ void generateHeightmap(AppContext &context)
 
                                                      if (v < 0.28f)
                                                      {
-                                                         return color_from({70, 130, 180});
+                                                         float t = v / 0.28f;
+                                                         glm::vec3 mixedWater = glm::mix(deepOcean, coastWater, t);
+                                                         return color_from({ (unsigned char)mixedWater.x, (unsigned char)mixedWater.y, (unsigned char)mixedWater.z });
                                                      }
                                                      else if (v < 0.30f)
                                                      {

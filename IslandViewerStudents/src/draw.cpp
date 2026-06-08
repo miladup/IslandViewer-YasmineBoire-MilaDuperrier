@@ -102,6 +102,18 @@ void drawImGui(AppContext &context)
     if (ImGui::CollapsingHeader("Objects", ImGuiTreeNodeFlags_DefaultOpen))
     {
         ImGui::SliderFloat("Cube Scale", &context.cubeScale, 0.01f, 1.0f);
+
+        auto& spawnParams = context.pointsGenerationParameters;
+        
+        if (ImGui::Checkbox("Allow in Water", &spawnParams.allowInWater))
+        {
+            generateObjectsPositions(context);
+        }
+        
+        if (ImGui::Checkbox("Allow on Mountains", &spawnParams.allowOnMountains))
+        {
+            generateObjectsPositions(context);
+        }
     }
 }
 

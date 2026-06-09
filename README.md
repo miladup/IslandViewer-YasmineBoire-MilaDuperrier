@@ -71,9 +71,9 @@ Pour obtenir un rendu réaliste et cohérent avec l'écosystème de l'île, nous
 
 ## 2. Améliorations intégrées au projet
 
-![Île Tropicale](<capture readme/tropicale.png>) 
+![Île Tropicale](tropicale.png) 
 
-![Île Volcanique](<capture readme/volcanique.png>)
+[Île Volcanique](volcanique.png)
 
 ![Île Arctique](<capture readme/arctique.png>)
 

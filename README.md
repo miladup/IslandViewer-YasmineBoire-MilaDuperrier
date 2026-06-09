@@ -71,7 +71,13 @@ Pour obtenir un rendu réaliste et cohérent avec l'écosystème de l'île, nous
 
 ## 2. Améliorations intégrées au projet
 
+![Île Tropicale](<capture readme/tropicale.png>)
 
+![Île Volcanique](<capture readme/volcanique.png>)
+
+![Île Arctique](<capture readme/arctique.png>)
+
+![Île Déserte](<capture readme/deserte.png>)
 
 Nous avons enrichi l'application initiale avec deux fonctionnalités majeures afin d'apporter de la modularité et d'améliorer l'aspect visuel globale :
 
@@ -80,10 +86,10 @@ Au lieu de figer l'île dans un unique thème verdoyant, nous avons lié la colo
 
 ### b. Biomes et modèles 3D dynamiques (Les 4 Îles)
 L'affichage des objets s'adapte désormais en temps réel au thème sélectionné grâce à un tableau de configurations dans notre contexte (`context.biomeModels`, `context.waterModels`, `context.mountainModels`). L'utilisateur peut explorer 4 ambiances uniques :
-* **Tropical 🌴 :** Palmiers au centre, canoës sur l'eau, rochers classiques sur les sommets.
-* **Volcanic 🌋 :** Arbres calcinés, débris magmatiques sur l'eau (lave), pics rocheux sombres.
-* **Arctic ❄️ :** Sapins enneigés (`tree_pineTallA_detailed`), blocs de glace/icebergs flottants (`stone_smallI_white`), tentes de camp de base sur les sommets.
-* **Desert 🌵 :** Grands cactus (`cactus_tall`), dalles de pierre craquelées sur le sable (`stone_smallFlatC`), et grandes buttes de canyon ocre.
+* **Tropical :** Palmiers au centre, canoës sur l'eau, rochers classiques sur les sommets.
+* **Volcanic :** Arbres calcinés, débris magmatiques sur l'eau (lave), pics rocheux sombres.
+* **Arctic :** Sapins enneigés (`tree_pineTallA_detailed`), blocs de glace/icebergs flottants (`stone_smallI_white`), tentes de camp de base sur les sommets.
+* **Desert :** Grands cactus (`cactus_tall`), dalles de pierre craquelées sur le sable (`stone_smallFlatC`), et grandes buttes de canyon ocre.
 
 ---
 

@@ -148,3 +148,9 @@ if (APPLE)
     target_link_libraries(${EXECUTABLE_NAME} PUBLIC "-framework Cocoa")
     target_link_libraries(${EXECUTABLE_NAME} PUBLIC "-framework OpenGL")
 endif()
+
+add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+    "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources"
+)

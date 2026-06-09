@@ -31,18 +31,55 @@ void drawCubes(AppContext const &context, Matrix const &terrainCentering)
         return;
     }
 
-    float const cubeHalfHeight{0.5f * context.cubeScale};
+    float const cubeHalfHeight{0.5f * context.cubeScale}; 
 
     for (glm::vec3 const &pos : context.objectPositions)
     {
-        Matrix const objectTranslation{MatrixTranslate(
+        float height = pos.z;
+        int currentTheme = context.imageGenerationParameters.selectedPalette;
+
+        Vector3 objectPos = {
             pos.x * context.terrainSize.x,
-            pos.z * context.terrainSize.y + cubeHalfHeight,
-            pos.y * context.terrainSize.z)};
-        Matrix const centeredTranslation{MatrixMultiply(objectTranslation, terrainCentering)};
-        Matrix const scale{MatrixScale(context.cubeScale, context.cubeScale, context.cubeScale)};
-        Matrix const transform{MatrixMultiply(scale, centeredTranslation)};
-        DrawMesh(context.cube, context.cubeMaterial, transform);
+            pos.z * context.terrainSize.y,
+            pos.y * context.terrainSize.z
+        };
+
+        objectPos = Vector3Transform(objectPos, terrainCentering);
+
+        if (!context.modelsLoaded)
+        {
+            Color backupColor = (height < 0.30f) ? BLUE : ((height > 0.55f) ? GRAY : GREEN);
+            objectPos.y += cubeHalfHeight; 
+            DrawCube(objectPos, context.cubeScale, context.cubeScale, context.cubeScale, backupColor);
+            continue; 
+        }
+
+        Model const* modelToDraw = nullptr;
+
+        if (height < 0.30f)
+        {
+            modelToDraw = &context.waterModels[currentTheme];
+        }
+        else if (height > 0.55f)
+        {
+            modelToDraw = &context.mountainModels[currentTheme];
+        }
+        else
+        {
+            modelToDraw = &context.biomeModels[currentTheme];
+        }
+
+        if (modelToDraw != nullptr && modelToDraw->meshCount > 0)
+        {
+            float displayScale = context.cubeScale; 
+            DrawModelEx(*modelToDraw, objectPos, Vector3{0.0f, 1.0f, 0.0f}, 0.0f, Vector3{displayScale, displayScale, displayScale}, WHITE);
+        }
+        else
+        {
+            Color backupColor = (height < 0.30f) ? BLUE : ((height > 0.55f) ? GRAY : GREEN);
+            objectPos.y += cubeHalfHeight; 
+            DrawCube(objectPos, context.cubeScale, context.cubeScale, context.cubeScale, backupColor);
+        }
     }
 }
 
@@ -103,7 +140,7 @@ void drawImGui(AppContext &context)
         ImGui::Separator();
         ImGui::Text("Radial Mask");
 
-        if (ImGui::SliderFloat("Mask power", &imgParams.maskPower, 0.5f, 6.0f, "%.1f"))
+        if (ImGui::SliderFloat("Mask Power", &imgParams.maskPower, 0.5f, 6.0f, "%.1f"))
         {
             generateHeightmap(context);
             regenerateMeshFromImage(context);

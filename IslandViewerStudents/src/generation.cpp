@@ -1,4 +1,5 @@
 #include "generation.hpp"
+#include "app.hpp"
 
 #include "noise.hpp"
 #include "raylib.h"
@@ -6,6 +7,49 @@
 #include "utils/raylibUtils.hpp"
 #include <algorithm>
 #include <cmath>
+
+static const IslandPalette AVAILABLE_PALETTES[] = {
+    // Ile tropicale (basique)
+    {
+        "Tropical",
+        {15.0f, 30.0f, 90.0f},     // deepOcean
+        {0.0f, 160.0f, 230.0f},    // coastWater
+        {0.0f, 100.0f, 200.0f},    // water
+        {238.0f, 214.0f, 175.0f},  // sand
+        {34.0f, 139.0f, 34.0f},    // grass
+        {180.0f, 180.0f, 180.0f}   // lightRock
+    },
+    // Ile volcanique
+    {
+        "Volcanic",
+        {15.0f, 10.0f, 15.0f},     // deepOcean
+        {70.0f, 20.0f, 15.0f},     // coastWater
+        {40.0f, 15.0f, 15.0f},     // water
+        {40.0f, 40.0f, 45.0f},     // sand
+        {75.0f, 65.0f, 60.0f},     // grass
+        {255.0f, 65.0f, 0.0f}      // lightRock
+    },
+    // Ile glacière
+    {
+        "Arctic",
+        {15.0f, 35.0f, 55.0f},     // deepOcean
+        {110.0f, 210.0f, 225.0f},  // coastWater
+        {70.0f, 170.0f, 200.0f},   // water
+        {230.0f, 240.0f, 245.0f},  // sand
+        {120.0f, 150.0f, 130.0f},  // grass
+        {255.0f, 255.0f, 255.0f}   // lightRock
+    },
+    // Ile désertique
+    {
+        "Desert",
+        {40.0f, 25.0f, 15.0f},     // deepOcean
+        {0.0f, 135.0f, 150.0f},    // coastWater
+        {20.0f, 160.0f, 130.0f},   // water
+        {225.0f, 170.0f, 110.0f},  // sand
+        {185.0f, 100.0f, 60.0f},   // grass
+        {130.0f, 65.0f, 40.0f}     // lightRock
+    }
+};
 
 std::vector<glm::vec2> generate2DPositions(PointsGenerationParameters const &params, AppContext const &context)
 {
@@ -221,12 +265,13 @@ void generateHeightmap(AppContext &context)
     // exemple conversion from heightmap to color image
     context.image = TransformImage<float, Color>(context.heightmapImage, [&](float const &v, int const, int const)
                                                  {
-                                                     glm::vec3 deepOcean = {15.0f, 30.0f, 90.0f};
-                                                     glm::vec3 coastWater = {0.0f, 160.0f, 230.0f};
-                                                     glm::vec3 water = {70.0f, 130.0f, 180.0f};
-                                                     glm::vec3 sand  = {238.0f, 214.0f, 175.0f};
-                                                     glm::vec3 grass = {34.0f, 139.0f, 34.0f};
-                                                     glm::vec3 lightRock = {180.0f, 180.0f, 180.0f};
+                                                    IslandPalette const& pal = AVAILABLE_PALETTES[context.imageGenerationParameters.selectedPalette];
+                                                     glm::vec3 deepOcean = pal.deepOcean;
+                                                     glm::vec3 coastWater = pal.coastWater;
+                                                     glm::vec3 water = pal.water;
+                                                     glm::vec3 sand  = pal.sand;
+                                                     glm::vec3 grass = pal.grass;
+                                                     glm::vec3 lightRock = pal.lightRock;
 
                                                      if (v < 0.28f)
                                                      {

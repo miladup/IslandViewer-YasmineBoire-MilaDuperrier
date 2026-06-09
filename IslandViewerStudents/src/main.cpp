@@ -7,6 +7,8 @@
 #include "generation.hpp"
 
 int main() {
+    ChangeDirectory(CMAKE_SOURCE_DIR);
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(1280, 720, "IMAC island viewer");
 
@@ -52,6 +54,28 @@ int main() {
     regenerateMeshFromImage(context);
     generateObjectsPositions(context);
 
+    // tropical
+    context.biomeModels[0] = LoadModel("resources/biome/tree_palmDetailedTall.obj");
+    context.waterModels[0] = LoadModel("resources/water/canoe.obj");
+    context.mountainModels[0] = LoadModel("resources/mountains/stone_tallH.obj");
+
+    // volcanic
+    context.biomeModels[1] = LoadModel("resources/biome/stump_oldTall.obj");
+    context.waterModels[1] = LoadModel("resources/water/stone_smallI.obj");
+    context.mountainModels[1] = LoadModel("resources/mountains/stone_tallE.obj");
+
+    // arctic
+    context.biomeModels[2] = LoadModel("resources/biome/tree_pineTallB_detailed.obj");
+    context.waterModels[2] = LoadModel("resources/water/stone_smallI_white.obj");
+    context.mountainModels[2] = LoadModel("resources/mountains/stone_tallH.obj");
+
+    // desert
+    context.biomeModels[3] = LoadModel("resources/biome/cactus_tall.obj");
+    context.waterModels[3] = LoadModel("resources/water/stone_smallFlatC.obj");
+    context.mountainModels[3] = LoadModel("resources/mountains/stone_tallE_brown.obj");
+
+    context.modelsLoaded = true;
+
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         UpdateCamera(&context.camera, CAMERA_ORBITAL);
@@ -69,6 +93,28 @@ int main() {
     }
 
     unload(context);
+
+    // biomes
+    for (int i = 0; i < 4; i++) {
+        if (context.biomeModels[i].meshCount > 0) {
+            UnloadModel(context.biomeModels[i]);
+        }
+    }
+
+    // water
+    for (int i = 0; i < 4; i++) {
+        if (context.waterModels[i].meshCount > 0) {
+            UnloadModel(context.waterModels[i]);
+        }
+    }
+
+    // mountains
+    for (int i = 0; i < 4; i++) {
+        if (context.mountainModels[i].meshCount > 0) {
+            UnloadModel(context.mountainModels[i]);
+        }
+    }
+    
     rlImGuiShutdown();
     CloseWindow();
     return 0;

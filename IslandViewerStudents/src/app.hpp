@@ -75,6 +75,11 @@ struct AppContext
 
     // Parameters for island generation
     ImageGenerationParameters imageGenerationParameters;
+
+    Model biomeModels[4];
+    Model waterModels[4];
+    Model mountainModels[4];
+    bool modelsLoaded{false};
 };
 
 Matrix getTerrainCenteringMatrix(AppContext const &context);

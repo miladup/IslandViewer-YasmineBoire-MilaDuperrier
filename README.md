@@ -2,9 +2,9 @@
 
 Rapport — Island Viewer
 
-la code à été réaliser dans le langage c++ sous les platforme windows et macos.
+la code à été réalisé dans le langage c++ sous les platformes windows et macos.
 
-1. les choix des algorithmiques
+1. les choix algorithmiques
 
 a. Bruit fractal
 Le bruit de base utilisé est le bruit de Perlin, via la fonction glm::perlin() de la bibliothèque GLM. Bien que plus lisse que le bruit de valeur simple, le Perlin seul manque de détail. Pour y remédier, nous avons implémenté un FBM (Fractional Brownian Motion), aussi appelé bruit fractal.
@@ -61,3 +61,4 @@ minDistance (r) : détermine la densité maximale. Une valeur faible produit des
 ![poisson disk sampling](<capture readme/poissondisksampling.png>)
 
 Les points doivent estres réinistialiser a chaque dois que je change un paramètre sinon les points sont moins visualiser comme sur cet exemple quand j'augmente le scale. ![scale augmenté](<capture readme/disksampligscaleevoluer.png>)
+

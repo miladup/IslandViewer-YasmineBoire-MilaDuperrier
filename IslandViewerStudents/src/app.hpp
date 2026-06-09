@@ -19,6 +19,9 @@ struct ImageGenerationParameters
     float maskPower{2.0f};
     float waterLevel{0.28f};
     float sandLevel{0.30f};
+
+    // palettes de couleurs
+    int selectedPalette{0};
 };
 
 struct PointsGenerationParameters
@@ -28,6 +31,16 @@ struct PointsGenerationParameters
 
     bool allowInWater{false};
     bool allowOnMountains{false};
+};
+
+struct IslandPalette {
+    const char* name;
+    glm::vec3 deepOcean;
+    glm::vec3 coastWater;
+    glm::vec3 water;
+    glm::vec3 sand;
+    glm::vec3 grass;
+    glm::vec3 lightRock;
 };
 
 struct AppContext

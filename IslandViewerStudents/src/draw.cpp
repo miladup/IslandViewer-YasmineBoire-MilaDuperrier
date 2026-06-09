@@ -90,6 +90,17 @@ void drawImGui(AppContext &context)
         }
 
         ImGui::Separator();
+        ImGui::Text("Island Theme");
+
+        const char* paletteNames[] = { "Tropical", "Volcanic", "Arctic", "Desert" };
+
+        if (ImGui::Combo("Terrain Theme", &context.imageGenerationParameters.selectedPalette, paletteNames, 4))
+        {
+            generateHeightmap(context); 
+            UpdateTexture(context.texture, context.image.data);
+        }
+
+        ImGui::Separator();
         ImGui::Text("Radial Mask");
 
         if (ImGui::SliderFloat("Mask power", &imgParams.maskPower, 0.5f, 6.0f, "%.1f"))

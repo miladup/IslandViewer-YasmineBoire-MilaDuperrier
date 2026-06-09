@@ -73,11 +73,11 @@ Pour obtenir un rendu réaliste et cohérent avec l'écosystème de l'île, nous
 
 ![Île Tropicale](tropicale.png) 
 
-[Île Volcanique](volcanique.png)
+![Île Volcanique](volcanique.png)
 
-![Île Arctique](<capture readme/arctique.png>)
+![Île Arctique](arctique.png)
 
-![Île Déserte](<capture readme/deserte.png>)
+![Île Déserte](deserte.png)
 
 Nous avons enrichi l'application initiale avec deux fonctionnalités majeures afin d'apporter de la modularité et d'améliorer l'aspect visuel globale :
 
